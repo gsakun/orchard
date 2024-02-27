@@ -7,6 +7,7 @@ import (
 	deletepkg "github.com/cirruslabs/orchard/internal/command/deletecmd"
 	"github.com/cirruslabs/orchard/internal/command/dev"
 	"github.com/cirruslabs/orchard/internal/command/get"
+	"github.com/cirruslabs/orchard/internal/command/label"
 	"github.com/cirruslabs/orchard/internal/command/list"
 	"github.com/cirruslabs/orchard/internal/command/logs"
 	"github.com/cirruslabs/orchard/internal/command/pause"
@@ -38,6 +39,7 @@ func NewRootCmd() *cobra.Command {
 		portforward.NewCommand(),
 		resume.NewCommand(),
 		set.NewCommand(),
+		label.NewCommand(),
 		ssh.NewCommand(),
 		vnc.NewCommand(),
 	)

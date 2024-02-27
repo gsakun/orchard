@@ -152,6 +152,9 @@ func (worker *Worker) registerWorker(ctx context.Context) error {
 	_, err = worker.client.Workers().Create(ctx, v1.Worker{
 		Meta: v1.Meta{
 			Name: worker.name,
+			Labels: map[string]string{
+				"org.cirruslabs.tart-worker": worker.name,
+			},
 		},
 		Resources: worker.resources,
 		LastSeen:  time.Now(),

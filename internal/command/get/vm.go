@@ -63,6 +63,16 @@ func runGetVM(cmd *cobra.Command, args []string) error {
 	table.AddRow("Name", vm.Name)
 	createdAtInfo := humanize.RelTime(vm.CreatedAt, time.Now(), "ago", "in the future")
 	table.AddRow("Created", createdAtInfo)
+
+	var labelsInfo string
+	if len(vm.Labels) != 0 {
+		workerLabels := lo.MapToSlice(vm.Labels, func(key string, value string) string {
+			return fmt.Sprintf("%s=%s", key, value)
+		})
+		labelsInfo = strings.Join(workerLabels, "/n")
+	}
+	table.AddRow("Labels", nonEmptyOrNone(labelsInfo))
+
 	table.AddRow("Image", vm.Image)
 	table.AddRow("Image pull policy", vm.ImagePullPolicy)
 	table.AddRow("CPU", vm.CPU)
@@ -73,6 +83,15 @@ func runGetVM(cmd *cobra.Command, args []string) error {
 	table.AddRow("Status", vm.Status)
 	table.AddRow("Status message", vm.StatusMessage)
 	table.AddRow("Assigned worker", nonEmptyOrNone(vm.Worker))
+
+	var workerSelect string
+	if len(vm.WorkerSelector) != 0 {
+		selectMap := lo.MapToSlice(vm.WorkerSelector, func(key string, value string) string {
+			return fmt.Sprintf("%s=%s", key, value)
+		})
+		workerSelect = strings.Join(selectMap, "/n")
+	}
+	table.AddRow("WorkerSelector", nonEmptyOrNone(workerSelect))
 
 	table.AddRow("Restart policy", vm.RestartPolicy)
 	restartedAtInfo := "never"

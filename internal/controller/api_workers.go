@@ -93,6 +93,9 @@ func (controller *Controller) updateWorker(ctx *gin.Context) responder.Responder
 
 		dbWorker.LastSeen = userWorker.LastSeen
 		dbWorker.SchedulingPaused = userWorker.SchedulingPaused
+		if userWorker.Labels != nil {
+			dbWorker.Labels = userWorker.Labels
+		}
 
 		if err := txn.SetWorker(*dbWorker); err != nil {
 			controller.logger.Errorf("failed to update worker in the DB: %v", err)

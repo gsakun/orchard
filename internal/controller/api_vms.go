@@ -132,6 +132,7 @@ func (controller *Controller) updateVM(ctx *gin.Context) responder.Responder {
 
 		dbVM.Status = userVM.Status
 		dbVM.StatusMessage = userVM.StatusMessage
+		dbVM.Labels = userVM.Labels
 
 		if err := txn.SetVM(*dbVM); err != nil {
 			controller.logger.Errorf("failed to update VM in the DB: %v", err)

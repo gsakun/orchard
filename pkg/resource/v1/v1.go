@@ -16,6 +16,9 @@ type Meta struct {
 	// It is populated by the Controller with the current time
 	// when receiving a POST request.
 	CreatedAt time.Time `json:"createdAt"`
+
+	// Labels is used to populate information about this resource
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 type VM struct {
@@ -26,6 +29,8 @@ type VM struct {
 	NetSoftnet      bool            `json:"net-softnet"`
 	NetBridged      string          `json:"net-bridged"`
 	Headless        bool            `json:"headless"`
+
+	WorkerSelector map[string]string `json:"workerSelector,omitempty"`
 
 	// Status field is used to track the lifecycle of the VM associated with this resource.
 	Status        VMStatus `json:"status"`

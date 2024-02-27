@@ -118,7 +118,8 @@ func (scheduler *Scheduler) schedulingLoopIteration() error {
 
 				if resourcesRemaining.CanFit(unscheduledVM.Resources) &&
 					!worker.Offline(scheduler.workerOfflineTimeout) &&
-					!worker.SchedulingPaused {
+					!worker.SchedulingPaused &&
+					labelMatch(worker.Labels, unscheduledVM.WorkerSelector) {
 					unscheduledVM.Worker = worker.Name
 
 					if err := txn.SetVM(unscheduledVM); err != nil {
@@ -246,4 +247,18 @@ func (scheduler *Scheduler) healthCheckVM(txn storepkg.Transaction, nameToWorker
 	}
 
 	return nil
+}
+
+func labelMatch(workerLabel, vmSelect map[string]string) bool {
+	for k, v := range vmSelect {
+		value, ok := workerLabel[k]
+		if !ok {
+			return false
+		} else {
+			if v != value {
+				return false
+			}
+		}
+	}
+	return true
 }

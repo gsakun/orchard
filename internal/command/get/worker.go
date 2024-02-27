@@ -79,6 +79,15 @@ func runGetWorker(cmd *cobra.Command, args []string) error {
 	}
 	table.AddRow("Resources", nonEmptyOrNone(resourcesInfo))
 
+	var labelsInfo string
+	if len(worker.Labels) != 0 {
+		workerLabels := lo.MapToSlice(worker.Labels, func(key string, value string) string {
+			return fmt.Sprintf("%s=%s", key, value)
+		})
+		labelsInfo = strings.Join(workerLabels, "/n")
+	}
+	table.AddRow("Labels", nonEmptyOrNone(labelsInfo))
+
 	fmt.Println(table)
 
 	return nil
