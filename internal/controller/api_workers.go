@@ -65,7 +65,9 @@ func (controller *Controller) createWorker(ctx *gin.Context) responder.Responder
 					"consider upgrading at https://tart.run/licensing/", controller.maxWorkersPerLicense))
 			}
 		}
-
+		if dbWorker.Labels != nil {
+			worker.Labels = dbWorker.Labels
+		}
 		if err := txn.SetWorker(worker); err != nil {
 			return responder.Error(err)
 		}
