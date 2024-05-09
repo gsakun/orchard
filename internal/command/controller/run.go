@@ -33,7 +33,8 @@ func newRunCommand() *cobra.Command {
 
 	cmd.PersistentFlags().StringVarP(&address, "listen", "l", fmt.Sprintf(":%s", port), "address to listen on")
 	cmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
-
+	cmd.PersistentFlags().BoolVar(&insecureAuthDisabled, "insecureAuthDisabled", false, "disable insecureAuth")
+	cmd.PersistentFlags().BoolVar(&tlsDisabled, "tlsDisabled", false, "disable tls")
 	// flags for auto-init if necessary
 	// this simplifies the user experience to run the controller in serverless environments
 	cmd.PersistentFlags().StringVar(&controllerCertPath, "controller-cert", "",
@@ -74,30 +75,38 @@ func runController(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	var controllerCert tls.Certificate
-	if dataDir.ControllerCertificateExists() {
-		controllerCert, err = dataDir.ControllerCertificate()
-		if err != nil {
-			return err
-		}
-	} else {
-		controllerCert, err = FindControllerCertificate(dataDir)
-		if err != nil {
-			return err
-		}
-	}
-
-	controllerInstance, err := controller.New(
+	controllerOpts := []controller.Option{
 		controller.WithListenAddr(address),
 		controller.WithDataDir(dataDir),
 		controller.WithLogger(logger),
-		controller.WithTLSConfig(&tls.Config{
+		controller.WithSwaggerDocs(),
+	}
+
+	if insecureAuthDisabled {
+		controllerOpts = append(controllerOpts, controller.WithInsecureAuthDisabled())
+	}
+	if tlsDisabled {
+		var controllerCert tls.Certificate
+		if dataDir.ControllerCertificateExists() {
+			controllerCert, err = dataDir.ControllerCertificate()
+			if err != nil {
+				return err
+			}
+		} else {
+			controllerCert, err = FindControllerCertificate(dataDir)
+			if err != nil {
+				return err
+			}
+		}
+		controllerOpts = append(controllerOpts, controller.WithTLSConfig(&tls.Config{
 			MinVersion: tls.VersionTLS12,
 			Certificates: []tls.Certificate{
 				controllerCert,
 			},
-		}),
-	)
+		}))
+	}
+
+	controllerInstance, err := controller.New(controllerOpts...)
 	if err != nil {
 		return err
 	}
