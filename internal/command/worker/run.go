@@ -23,6 +23,7 @@ var logFilePath string
 var stringToStringResources map[string]string
 var noPKI bool
 var debug bool
+var insecure bool
 
 func newRunCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -43,6 +44,7 @@ func newRunCommand() *cobra.Command {
 			"certificate using a bootstrap token (or manually via fingerprint, "+
 			"if no bootstrap token is provided)")
 	cmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug logging")
+	cmd.PersistentFlags().BoolVar(&insecure, "insecure", false, "enable insecure")
 
 	return cmd
 }
@@ -53,39 +55,39 @@ func runWorker(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-
+	clientOpts := []client.Option{
+		client.WithAddress(controllerURL.String()),
+	}
 	// Parse bootstrap token
-	if bootstrapTokenRaw == "" {
-		return ErrBootstrapTokenNotProvided
-	}
-	bootstrapToken, err := bootstraptoken.NewFromString(bootstrapTokenRaw)
-	if err != nil {
-		return err
-	}
+	if !insecure {
+		if bootstrapTokenRaw == "" {
+			return ErrBootstrapTokenNotProvided
+		}
 
+		bootstrapToken, err := bootstraptoken.NewFromString(bootstrapTokenRaw)
+		if err != nil {
+			return err
+		}
+		clientOpts = append(clientOpts, client.WithCredentials(bootstrapToken.ServiceAccountName(), bootstrapToken.ServiceAccountToken()))
+		if trustedCertificate := bootstrapToken.Certificate(); trustedCertificate != nil {
+			clientOpts = append(clientOpts, client.WithTrustedCertificate(trustedCertificate))
+		} else if noPKI {
+			return fmt.Errorf("%w: --no-pki was specified, but not trusted certificate was provided "+
+				"in the bootstrap token", ErrRunFailed)
+		}
+	} else {
+		clientOpts = append(clientOpts, client.WithInsecureSkipVerify())
+	}
 	// Convert resources
 	resources, err := v1.NewResourcesFromStringToString(stringToStringResources)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrRunFailed, err)
 	}
 
-	clientOpts := []client.Option{
-		client.WithAddress(controllerURL.String()),
-		client.WithCredentials(bootstrapToken.ServiceAccountName(), bootstrapToken.ServiceAccountToken()),
-	}
-
-	if trustedCertificate := bootstrapToken.Certificate(); trustedCertificate != nil {
-		clientOpts = append(clientOpts, client.WithTrustedCertificate(trustedCertificate))
-	} else if noPKI {
-		return fmt.Errorf("%w: --no-pki was specified, but not trusted certificate was provided "+
-			"in the bootstrap token", ErrRunFailed)
-	}
-
 	controllerClient, err := client.New(clientOpts...)
 	if err != nil {
 		return err
 	}
-
 	// Initialize the logger
 	logger, err := createLogger()
 	if err != nil {

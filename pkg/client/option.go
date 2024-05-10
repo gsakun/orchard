@@ -18,6 +18,12 @@ func WithTrustedCertificate(trustedCertificate *x509.Certificate) Option {
 	}
 }
 
+func WithInsecureSkipVerify() Option {
+	return func(client *Client) {
+		client.insecure = true
+	}
+}
+
 func WithCredentials(serviceAccountName string, serviceAccountToken string) Option {
 	return func(client *Client) {
 		client.serviceAccountName = serviceAccountName
