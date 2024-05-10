@@ -83,9 +83,12 @@ func runController(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if insecureAuthDisabled {
+		logger.Info("set insecure authentication disable")
 		controllerOpts = append(controllerOpts, controller.WithInsecureAuthDisabled())
 	}
 	if tlsDisabled {
+		logger.Info("set tls disable")
+	} else {
 		var controllerCert tls.Certificate
 		if dataDir.ControllerCertificateExists() {
 			controllerCert, err = dataDir.ControllerCertificate()
